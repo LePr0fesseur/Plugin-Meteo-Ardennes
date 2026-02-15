@@ -1,0 +1,232 @@
+/**
+ * Ardennes Weather Map Pro - Admin Styles
+ *
+ * @package Ardennes_Weather_Map_Pro
+ */
+
+.awmp-admin-wrap h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 23px;
+    font-weight: 400;
+    margin: 0 0 20px;
+    padding: 9px 0 4px;
+}
+
+.awmp-admin-wrap h1 .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #2271b1;
+}
+
+.awmp-admin-container {
+    max-width: 1100px;
+}
+
+/* Form Section */
+.awmp-form-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px 24px 24px;
+    margin-bottom: 20px;
+}
+
+.awmp-form-section h2 {
+    margin: 0 0 16px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.awmp-form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.awmp-form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.awmp-form-group label {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.awmp-form-group input,
+.awmp-form-group select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 2;
+    min-height: 30px;
+    box-sizing: border-box;
+}
+
+.awmp-form-group input:focus,
+.awmp-form-group select:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+/* Fieldset */
+.awmp-fieldset {
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 12px 16px 16px;
+    margin: 0 0 12px;
+}
+
+.awmp-fieldset legend {
+    font-weight: 600;
+    font-size: 14px;
+    color: #2271b1;
+    padding: 0 8px;
+}
+
+/* Form Actions */
+.awmp-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.awmp-form-actions .button-primary {
+    min-width: 160px;
+}
+
+/* Messages */
+.awmp-msg-success {
+    background: #d1e7dd;
+    color: #0a3622;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-top: 12px;
+    font-size: 13px;
+    border-left: 4px solid #00a32a;
+}
+
+.awmp-msg-error {
+    background: #f8d7da;
+    color: #842029;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-top: 12px;
+    font-size: 13px;
+    border-left: 4px solid #d63638;
+}
+
+/* Shortcode Info */
+.awmp-shortcode-info {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+    border-radius: 4px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+}
+
+.awmp-shortcode-info h3 {
+    margin: 0 0 6px;
+    font-size: 14px;
+}
+
+.awmp-shortcode-info p {
+    margin: 0 0 6px;
+    font-size: 13px;
+}
+
+.awmp-shortcode-info code {
+    background: #fff;
+    padding: 4px 10px;
+    font-size: 14px;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    user-select: all;
+}
+
+/* Table Section */
+.awmp-table-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px 24px 24px;
+}
+
+.awmp-table-section h2 {
+    margin: 0 0 14px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+#awmp-cities-table .column-name {
+    width: 22%;
+}
+
+#awmp-cities-table .column-coords {
+    width: 18%;
+}
+
+#awmp-cities-table .column-morning,
+#awmp-cities-table .column-afternoon {
+    width: 20%;
+}
+
+#awmp-cities-table .column-actions {
+    width: 20%;
+}
+
+#awmp-cities-table .awmp-temp {
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+#awmp-cities-table .awmp-condition {
+    font-size: 12px;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #50575e;
+}
+
+#awmp-cities-table .awmp-empty {
+    color: #a7aaad;
+}
+
+#awmp-cities-table .button-small {
+    margin-right: 4px;
+}
+
+#awmp-cities-table .button-link-delete {
+    color: #b32d2e;
+}
+
+#awmp-cities-table .button-link-delete:hover {
+    color: #a00;
+    background: #f8d7da;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .awmp-form-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    #awmp-cities-table .column-coords {
+        display: none;
+    }
+}
