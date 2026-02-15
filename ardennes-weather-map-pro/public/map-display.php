@@ -72,15 +72,21 @@ class AWMP_Map_Display {
         $cities_data = [];
         foreach ( $cities as $city ) {
             $cities_data[] = [
-                'name'                => $city->city_name,
-                'lat'                 => (float) $city->latitude,
-                'lng'                 => (float) $city->longitude,
-                'morning_temp'        => $city->morning_temp,
-                'morning_condition'   => $city->morning_condition,
-                'morning_label'       => $condition_labels[ $city->morning_condition ] ?? '',
-                'afternoon_temp'      => $city->afternoon_temp,
-                'afternoon_condition' => $city->afternoon_condition,
-                'afternoon_label'     => $condition_labels[ $city->afternoon_condition ] ?? '',
+                'name'                           => $city->city_name,
+                'lat'                            => (float) $city->latitude,
+                'lng'                            => (float) $city->longitude,
+                'morning_temp'                   => $city->morning_temp,
+                'morning_condition'              => $city->morning_condition,
+                'morning_label'                  => $condition_labels[ $city->morning_condition ] ?? '',
+                'afternoon_temp'                 => $city->afternoon_temp,
+                'afternoon_condition'            => $city->afternoon_condition,
+                'afternoon_label'                => $condition_labels[ $city->afternoon_condition ] ?? '',
+                'tomorrow_morning_temp'          => $city->tomorrow_morning_temp ?? '',
+                'tomorrow_morning_condition'     => $city->tomorrow_morning_condition ?? '',
+                'tomorrow_morning_label'         => $condition_labels[ $city->tomorrow_morning_condition ?? '' ] ?? '',
+                'tomorrow_afternoon_temp'        => $city->tomorrow_afternoon_temp ?? '',
+                'tomorrow_afternoon_condition'   => $city->tomorrow_afternoon_condition ?? '',
+                'tomorrow_afternoon_label'       => $condition_labels[ $city->tomorrow_afternoon_condition ?? '' ] ?? '',
             ];
         }
 
@@ -104,17 +110,24 @@ class AWMP_Map_Display {
         <div class="awmp-weather-widget">
             <div class="awmp-header">
                 <h2 class="awmp-title">Météo des Ardennes</h2>
-                <div class="awmp-period-switcher">
-                    <button type="button" class="awmp-period-btn active" data-period="morning">
-                        <span class="awmp-period-icon">&#9788;</span> Matin
-                    </button>
-                    <button type="button" class="awmp-period-btn" data-period="afternoon">
-                        <span class="awmp-period-icon">&#9789;</span> Après-midi
-                    </button>
+                <div class="awmp-switchers">
+                    <div class="awmp-day-switcher">
+                        <button type="button" class="awmp-day-btn active" data-day="today">Aujourd'hui</button>
+                        <button type="button" class="awmp-day-btn" data-day="tomorrow">Demain</button>
+                    </div>
+                    <div class="awmp-period-switcher">
+                        <button type="button" class="awmp-period-btn active" data-period="morning">
+                            <span class="awmp-period-icon">&#9788;</span> Matin
+                        </button>
+                        <button type="button" class="awmp-period-btn" data-period="afternoon">
+                            <span class="awmp-period-icon">&#9789;</span> Après-midi
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="awmp-map-container">
                 <?php echo $svg_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG generated internally. ?>
+                <div class="awmp-weather-overlay" data-condition=""></div>
             </div>
             <div class="awmp-legend">
                 <span class="awmp-legend-item">

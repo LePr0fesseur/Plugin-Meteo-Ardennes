@@ -183,4 +183,53 @@
         });
     });
 
+    /**
+     * Range slider live value display.
+     */
+    $('#awmp-display-settings-form input[type="range"]').on('input', function () {
+        $(this).siblings('.awmp-range-value').text(this.value + 'px');
+    });
+
+    /**
+     * Reset settings to defaults.
+     */
+    $('#awmp-reset-settings-btn').on('click', function () {
+        $('#awmp-display-settings-form input[type="range"]').each(function () {
+            var def = $(this).siblings('.awmp-range-value').data('default');
+            $(this).val(def);
+            $(this).siblings('.awmp-range-value').text(def + 'px');
+        });
+    });
+
+    /**
+     * Save display settings via AJAX.
+     */
+    $('#awmp-display-settings-form').on('submit', function (e) {
+        e.preventDefault();
+
+        var data = {
+            action:              'awmp_save_display_settings',
+            nonce:               awmpAdmin.nonce,
+            city_name_font_size: $('#awmp-setting-city-font').val(),
+            temp_font_size:      $('#awmp-setting-temp-font').val(),
+            icon_size:           $('#awmp-setting-icon-size').val(),
+            dot_radius:          $('#awmp-setting-dot-radius').val()
+        };
+
+        var btn = $('#awmp-save-settings-btn');
+        btn.prop('disabled', true).text('Enregistrement...');
+
+        $.post(awmpAdmin.ajaxUrl, data, function (response) {
+            btn.prop('disabled', false).text('Enregistrer les paramètres');
+            if (response.success) {
+                showMessage('#awmp-settings-message', response.data.message, false);
+            } else {
+                showMessage('#awmp-settings-message', response.data.message, true);
+            }
+        }).fail(function () {
+            btn.prop('disabled', false).text('Enregistrer les paramètres');
+            showMessage('#awmp-settings-message', 'Erreur de communication avec le serveur.', true);
+        });
+    });
+
 })(jQuery);

@@ -40,6 +40,16 @@ class AWMP_Weather_Fetcher {
     private const AFTERNOON_HOURS = [ 13, 14, 15, 16, 17 ];
 
     /**
+     * Tomorrow morning hours (offset +24).
+     */
+    private const TOMORROW_MORNING_HOURS = [ 31, 32, 33, 34, 35 ];
+
+    /**
+     * Tomorrow afternoon hours (offset +24).
+     */
+    private const TOMORROW_AFTERNOON_HOURS = [ 37, 38, 39, 40, 41 ];
+
+    /**
      * WMO weather code to internal condition mapping.
      */
     private const WMO_CONDITIONS = [
@@ -126,9 +136,13 @@ class AWMP_Weather_Fetcher {
             return 'Source 2 : ' . $mr_data;
         }
 
-        // Calculate averaged temperatures.
-        $morning_avg  = self::calculate_average( $mf_data['morning_temp'], $mr_data['morning_temp'] );
+        // Calculate averaged temperatures — today.
+        $morning_avg   = self::calculate_average( $mf_data['morning_temp'], $mr_data['morning_temp'] );
         $afternoon_avg = self::calculate_average( $mf_data['afternoon_temp'], $mr_data['afternoon_temp'] );
+
+        // Calculate averaged temperatures — tomorrow.
+        $tmr_morning_avg   = self::calculate_average( $mf_data['tomorrow_morning_temp'], $mr_data['tomorrow_morning_temp'] );
+        $tmr_afternoon_avg = self::calculate_average( $mf_data['tomorrow_afternoon_temp'], $mr_data['tomorrow_afternoon_temp'] );
 
         // Get conditions from Météo France only.
         $morning_condition   = $mf_data['morning_condition'];
@@ -136,17 +150,27 @@ class AWMP_Weather_Fetcher {
 
         // Store in database.
         return self::store_weather_data( $city->id, [
-            'morning_temp'        => self::format_temp( $morning_avg ),
-            'morning_condition'   => $morning_condition,
-            'afternoon_temp'      => self::format_temp( $afternoon_avg ),
-            'afternoon_condition' => $afternoon_condition,
-            'temp_mf_morning'     => $mf_data['morning_temp'],
-            'temp_mf_afternoon'   => $mf_data['afternoon_temp'],
-            'temp_mr_morning'     => $mr_data['morning_temp'],
-            'temp_mr_afternoon'   => $mr_data['afternoon_temp'],
-            'weather_code_morning'   => $mf_data['morning_code'],
-            'weather_code_afternoon' => $mf_data['afternoon_code'],
-            'last_weather_update' => current_time( 'mysql' ),
+            'morning_temp'                 => self::format_temp( $morning_avg ),
+            'morning_condition'            => $morning_condition,
+            'afternoon_temp'               => self::format_temp( $afternoon_avg ),
+            'afternoon_condition'          => $afternoon_condition,
+            'temp_mf_morning'              => $mf_data['morning_temp'],
+            'temp_mf_afternoon'            => $mf_data['afternoon_temp'],
+            'temp_mr_morning'              => $mr_data['morning_temp'],
+            'temp_mr_afternoon'            => $mr_data['afternoon_temp'],
+            'weather_code_morning'         => $mf_data['morning_code'],
+            'weather_code_afternoon'       => $mf_data['afternoon_code'],
+            'tomorrow_morning_temp'        => self::format_temp( $tmr_morning_avg ),
+            'tomorrow_morning_condition'   => $mf_data['tomorrow_morning_condition'],
+            'tomorrow_afternoon_temp'      => self::format_temp( $tmr_afternoon_avg ),
+            'tomorrow_afternoon_condition' => $mf_data['tomorrow_afternoon_condition'],
+            'temp_mf_tomorrow_morning'     => $mf_data['tomorrow_morning_temp'],
+            'temp_mf_tomorrow_afternoon'   => $mf_data['tomorrow_afternoon_temp'],
+            'temp_mr_tomorrow_morning'     => $mr_data['tomorrow_morning_temp'],
+            'temp_mr_tomorrow_afternoon'   => $mr_data['tomorrow_afternoon_temp'],
+            'weather_code_tomorrow_morning'   => $mf_data['tomorrow_morning_code'],
+            'weather_code_tomorrow_afternoon' => $mf_data['tomorrow_afternoon_code'],
+            'last_weather_update'          => current_time( 'mysql' ),
         ] );
     }
 
@@ -170,7 +194,7 @@ class AWMP_Weather_Fetcher {
             'longitude'     => $lon,
             'hourly'        => $hourly_params,
             'timezone'      => 'Europe/Paris',
-            'forecast_days' => 1,
+            'forecast_days' => 2,
         ], $endpoint );
 
         $response = wp_remote_get( $url, [
@@ -209,26 +233,51 @@ class AWMP_Weather_Fetcher {
             return 'Données horaires insuffisantes.';
         }
 
+        // Extract tomorrow values.
+        $tmr_morning_temps  = self::extract_hours( $temps, self::TOMORROW_MORNING_HOURS );
+        $tmr_morning_temp   = ! empty( $tmr_morning_temps ) ? array_sum( $tmr_morning_temps ) / count( $tmr_morning_temps ) : $morning_temp;
+
+        $tmr_afternoon_temps = self::extract_hours( $temps, self::TOMORROW_AFTERNOON_HOURS );
+        $tmr_afternoon_temp  = ! empty( $tmr_afternoon_temps ) ? array_sum( $tmr_afternoon_temps ) / count( $tmr_afternoon_temps ) : $afternoon_temp;
+
         $result = [
-            'morning_temp'       => round( $morning_temp, 1 ),
-            'afternoon_temp'     => round( $afternoon_temp, 1 ),
-            'morning_condition'  => '',
-            'afternoon_condition' => '',
-            'morning_code'       => 0,
-            'afternoon_code'     => 0,
+            'morning_temp'                => round( $morning_temp, 1 ),
+            'afternoon_temp'              => round( $afternoon_temp, 1 ),
+            'morning_condition'           => '',
+            'afternoon_condition'         => '',
+            'morning_code'                => 0,
+            'afternoon_code'              => 0,
+            'tomorrow_morning_temp'       => round( $tmr_morning_temp, 1 ),
+            'tomorrow_afternoon_temp'     => round( $tmr_afternoon_temp, 1 ),
+            'tomorrow_morning_condition'  => '',
+            'tomorrow_afternoon_condition' => '',
+            'tomorrow_morning_code'       => 0,
+            'tomorrow_afternoon_code'     => 0,
         ];
 
         if ( $with_weather_code && ! empty( $codes ) ) {
-            $morning_codes  = self::extract_hours( $codes, self::MORNING_HOURS );
+            $morning_codes   = self::extract_hours( $codes, self::MORNING_HOURS );
             $afternoon_codes = self::extract_hours( $codes, self::AFTERNOON_HOURS );
 
-            $morning_dominant  = self::dominant_value( $morning_codes );
+            $morning_dominant   = self::dominant_value( $morning_codes );
             $afternoon_dominant = self::dominant_value( $afternoon_codes );
 
-            $result['morning_condition']  = self::WMO_CONDITIONS[ $morning_dominant ] ?? '';
+            $result['morning_condition']   = self::WMO_CONDITIONS[ $morning_dominant ] ?? '';
             $result['afternoon_condition'] = self::WMO_CONDITIONS[ $afternoon_dominant ] ?? '';
-            $result['morning_code']       = $morning_dominant;
-            $result['afternoon_code']     = $afternoon_dominant;
+            $result['morning_code']        = $morning_dominant;
+            $result['afternoon_code']      = $afternoon_dominant;
+
+            // Tomorrow conditions.
+            $tmr_morning_codes   = self::extract_hours( $codes, self::TOMORROW_MORNING_HOURS );
+            $tmr_afternoon_codes = self::extract_hours( $codes, self::TOMORROW_AFTERNOON_HOURS );
+
+            $tmr_morning_dominant   = self::dominant_value( $tmr_morning_codes );
+            $tmr_afternoon_dominant = self::dominant_value( $tmr_afternoon_codes );
+
+            $result['tomorrow_morning_condition']  = self::WMO_CONDITIONS[ $tmr_morning_dominant ] ?? '';
+            $result['tomorrow_afternoon_condition'] = self::WMO_CONDITIONS[ $tmr_afternoon_dominant ] ?? '';
+            $result['tomorrow_morning_code']       = $tmr_morning_dominant;
+            $result['tomorrow_afternoon_code']     = $tmr_afternoon_dominant;
         }
 
         return $result;
@@ -314,6 +363,16 @@ class AWMP_Weather_Fetcher {
                 '%f', // temp_mr_afternoon
                 '%d', // weather_code_morning
                 '%d', // weather_code_afternoon
+                '%s', // tomorrow_morning_temp
+                '%s', // tomorrow_morning_condition
+                '%s', // tomorrow_afternoon_temp
+                '%s', // tomorrow_afternoon_condition
+                '%f', // temp_mf_tomorrow_morning
+                '%f', // temp_mf_tomorrow_afternoon
+                '%f', // temp_mr_tomorrow_morning
+                '%f', // temp_mr_tomorrow_afternoon
+                '%d', // weather_code_tomorrow_morning
+                '%d', // weather_code_tomorrow_afternoon
                 '%s', // last_weather_update
             ],
             [ '%d' ]

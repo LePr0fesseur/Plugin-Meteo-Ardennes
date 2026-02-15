@@ -101,6 +101,13 @@ class AWMP_SVG_Map {
     /* ================================================================== */
 
     /**
+     * Display settings (loaded once per render).
+     *
+     * @var array<string, int>
+     */
+    private static array $settings = [];
+
+    /**
      * Render the complete inline SVG.
      *
      * @param array  $cities   Array of city data arrays (from map-display.php).
@@ -108,6 +115,7 @@ class AWMP_SVG_Map {
      * @return string The inline SVG markup.
      */
     public static function render( array $cities, string $icons_dir ): string {
+        self::$settings = Ardennes_Weather_Map_Pro::get_display_settings();
         $boundary_path = self::get_boundary_path();
         $icon_symbols  = self::get_icon_symbols( $icons_dir );
 
@@ -307,55 +315,79 @@ class AWMP_SVG_Map {
         $x = round( self::lng_to_x( $lng ), 1 );
         $y = round( self::lat_to_y( $lat ), 1 );
 
-        // Morning data rendered by default (JS switches to afternoon).
+        // Morning data rendered by default (JS switches periods/days).
         $temp      = $city['morning_temp'] ?? '';
         $condition = $city['morning_condition'] ?? '';
         $color     = self::temp_to_color( $temp );
 
+        // Dynamic sizes from settings.
+        $s           = self::$settings;
+        $name_fs     = $s['city_name_font_size'];
+        $temp_fs     = $s['temp_font_size'];
+        $icon_sz     = $s['icon_size'];
+        $dot_r       = $s['dot_radius'];
+        $badge_h     = (int) round( $temp_fs * 1.67 );
+        $badge_w     = (int) round( $temp_fs * 3.56 );
+        $badge_rx    = (int) round( $badge_h / 2 );
+        $weather_dy  = $temp_fs;
+        $label_dy    = (int) round( $name_fs * 2.33 );
+
         // Label offset.
-        $offset = self::LABEL_OFFSETS[ $slug ] ?? [ 'middle', 0, -42 ];
+        $default_offset = [ 'middle', 0, -$label_dy ];
+        $offset = self::LABEL_OFFSETS[ $slug ] ?? $default_offset;
+        // Scale the stored offsets proportionally if using named offsets.
         $anchor = $offset[0];
         $ldx    = $offset[1];
-        $ldy    = $offset[2];
+        // For side-anchored labels, recalculate dx based on dot radius.
+        if ( 'start' === $anchor && isset( self::LABEL_OFFSETS[ $slug ] ) ) {
+            $ldx = $dot_r * 2;
+        } elseif ( 'end' === $anchor && isset( self::LABEL_OFFSETS[ $slug ] ) ) {
+            $ldx = -( $dot_r * 2 );
+        }
+        $ldy = isset( self::LABEL_OFFSETS[ $slug ] ) && 'middle' !== $anchor ? $offset[2] : -$label_dy;
 
         $svg  = '<g id="awmp-city-' . esc_attr( $slug ) . '" class="awmp-city"';
         $svg .= ' transform="translate(' . $x . ',' . $y . ')"';
         $svg .= ' data-lat="' . esc_attr( $lat ) . '" data-lng="' . esc_attr( $lng ) . '">';
 
         // ── City dot ──
-        $svg .= '<circle class="awmp-city-dot" cx="0" cy="0" r="7"';
+        $svg .= '<circle class="awmp-city-dot" cx="0" cy="0" r="' . $dot_r . '"';
         $svg .= ' fill="#1a5276" stroke="#fff" stroke-width="2.5"/>';
 
         // ── City name label ──
         $svg .= '<text class="awmp-city-name" x="' . $ldx . '" y="' . $ldy . '"';
         $svg .= ' text-anchor="' . $anchor . '"';
-        $svg .= ' font-size="18" font-weight="700" fill="#1a252f">';
+        $svg .= ' font-size="' . $name_fs . '" font-weight="700" fill="#1a252f">';
         $svg .= esc_html( $name );
         $svg .= '</text>';
 
         // ── Weather data group ──
-        $svg .= '<g class="awmp-city-weather" transform="translate(0, 18)">';
+        $svg .= '<g class="awmp-city-weather" transform="translate(0, ' . $weather_dy . ')">';
 
         // Temperature badge background.
-        $svg .= '<rect class="awmp-temp-bg" x="-32" y="-15" width="64" height="30"';
-        $svg .= ' rx="15" fill="' . esc_attr( $color ) . '" filter="url(#awmp-badge-shadow)"/>';
+        $bx = (int) round( -$badge_w / 2 );
+        $by = (int) round( -$badge_h / 2 );
+        $svg .= '<rect class="awmp-temp-bg" x="' . $bx . '" y="' . $by . '" width="' . $badge_w . '" height="' . $badge_h . '"';
+        $svg .= ' rx="' . $badge_rx . '" fill="' . esc_attr( $color ) . '" filter="url(#awmp-badge-shadow)"/>';
 
         // Temperature text.
-        $svg .= '<text class="awmp-temp-text" x="0" y="6"';
-        $svg .= ' text-anchor="middle" font-size="18" font-weight="700" fill="#fff">';
+        $text_y = (int) round( $temp_fs * 0.33 );
+        $svg .= '<text class="awmp-temp-text" x="0" y="' . $text_y . '"';
+        $svg .= ' text-anchor="middle" font-size="' . $temp_fs . '" font-weight="700" fill="#fff">';
         $svg .= esc_html( $temp ?: '--' );
         $svg .= '</text>';
 
         // Weather icon.
+        $icon_x = (int) round( $badge_w / 2 - 2 );
+        $icon_y = (int) round( -$icon_sz / 2 );
         if ( $condition && isset( self::ICON_FILES[ $condition ] ) ) {
             $svg .= '<use class="awmp-weather-icon"';
             $svg .= ' href="#awmp-icon-' . esc_attr( $condition ) . '"';
             $svg .= ' xlink:href="#awmp-icon-' . esc_attr( $condition ) . '"';
-            $svg .= ' x="30" y="-17" width="34" height="34"/>';
+            $svg .= ' x="' . $icon_x . '" y="' . $icon_y . '" width="' . $icon_sz . '" height="' . $icon_sz . '"/>';
         } else {
-            // Hidden placeholder so JS can update it later.
             $svg .= '<use class="awmp-weather-icon" href="" xlink:href=""';
-            $svg .= ' x="30" y="-17" width="34" height="34" style="display:none"/>';
+            $svg .= ' x="' . $icon_x . '" y="' . $icon_y . '" width="' . $icon_sz . '" height="' . $icon_sz . '" style="display:none"/>';
         }
 
         $svg .= '</g>'; // .awmp-city-weather

@@ -220,6 +220,59 @@ class AWMP_Admin_Page {
                     </form>
                 </div>
 
+                <!-- Display Settings -->
+                <?php
+                $display_settings = Ardennes_Weather_Map_Pro::get_display_settings();
+                $defaults         = Ardennes_Weather_Map_Pro::get_default_display_settings();
+                ?>
+                <div class="awmp-form-section">
+                    <h2><span class="dashicons dashicons-admin-appearance"></span> Paramètres d'affichage</h2>
+                    <p class="awmp-settings-desc">Ajustez la taille des éléments affichés sur la carte SVG.</p>
+                    <form id="awmp-display-settings-form" class="awmp-form">
+                        <div class="awmp-form-row">
+                            <div class="awmp-form-group">
+                                <label for="awmp-setting-city-font">Taille nom de ville (px)</label>
+                                <input type="range" id="awmp-setting-city-font" name="city_name_font_size"
+                                    min="10" max="30" step="1"
+                                    value="<?php echo esc_attr( $display_settings['city_name_font_size'] ); ?>">
+                                <span class="awmp-range-value" data-default="<?php echo esc_attr( $defaults['city_name_font_size'] ); ?>"><?php echo esc_html( $display_settings['city_name_font_size'] ); ?>px</span>
+                            </div>
+                            <div class="awmp-form-group">
+                                <label for="awmp-setting-temp-font">Taille température (px)</label>
+                                <input type="range" id="awmp-setting-temp-font" name="temp_font_size"
+                                    min="10" max="30" step="1"
+                                    value="<?php echo esc_attr( $display_settings['temp_font_size'] ); ?>">
+                                <span class="awmp-range-value" data-default="<?php echo esc_attr( $defaults['temp_font_size'] ); ?>"><?php echo esc_html( $display_settings['temp_font_size'] ); ?>px</span>
+                            </div>
+                        </div>
+                        <div class="awmp-form-row">
+                            <div class="awmp-form-group">
+                                <label for="awmp-setting-icon-size">Taille icônes météo (px)</label>
+                                <input type="range" id="awmp-setting-icon-size" name="icon_size"
+                                    min="16" max="60" step="2"
+                                    value="<?php echo esc_attr( $display_settings['icon_size'] ); ?>">
+                                <span class="awmp-range-value" data-default="<?php echo esc_attr( $defaults['icon_size'] ); ?>"><?php echo esc_html( $display_settings['icon_size'] ); ?>px</span>
+                            </div>
+                            <div class="awmp-form-group">
+                                <label for="awmp-setting-dot-radius">Taille marqueur ville (px)</label>
+                                <input type="range" id="awmp-setting-dot-radius" name="dot_radius"
+                                    min="3" max="15" step="1"
+                                    value="<?php echo esc_attr( $display_settings['dot_radius'] ); ?>">
+                                <span class="awmp-range-value" data-default="<?php echo esc_attr( $defaults['dot_radius'] ); ?>"><?php echo esc_html( $display_settings['dot_radius'] ); ?>px</span>
+                            </div>
+                        </div>
+                        <div class="awmp-form-actions">
+                            <button type="submit" class="button button-primary" id="awmp-save-settings-btn">
+                                Enregistrer les paramètres
+                            </button>
+                            <button type="button" class="button" id="awmp-reset-settings-btn">
+                                Réinitialiser
+                            </button>
+                        </div>
+                        <div id="awmp-settings-message"></div>
+                    </form>
+                </div>
+
                 <!-- Shortcode Info -->
                 <div class="awmp-shortcode-info">
                     <h3>Shortcode</h3>
@@ -237,6 +290,8 @@ class AWMP_Admin_Page {
                                 <th class="column-postal">CP</th>
                                 <th class="column-morning">Matin</th>
                                 <th class="column-afternoon">Après-midi</th>
+                                <th class="column-tomorrow-m">Demain M</th>
+                                <th class="column-tomorrow-a">Demain AM</th>
                                 <th class="column-sources">Sources (MF / MR)</th>
                                 <th class="column-update">MAJ</th>
                                 <th class="column-actions">Actions</th>
@@ -245,7 +300,7 @@ class AWMP_Admin_Page {
                         <tbody>
                             <?php if ( empty( $cities ) ) : ?>
                                 <tr class="awmp-no-cities">
-                                    <td colspan="7">Aucune ville enregistrée.</td>
+                                    <td colspan="9">Aucune ville enregistrée.</td>
                                 </tr>
                             <?php else : ?>
                                 <?php foreach ( $cities as $city ) : ?>
@@ -277,6 +332,32 @@ class AWMP_Admin_Page {
                                                 <span class="awmp-temp"><?php echo esc_html( $city->afternoon_temp ); ?></span>
                                                 <?php if ( $city->afternoon_condition ) : ?>
                                                     <span class="awmp-condition"><?php echo esc_html( $conditions[ $city->afternoon_condition ] ?? $city->afternoon_condition ); ?></span>
+                                                <?php endif; ?>
+                                            <?php else : ?>
+                                                <span class="awmp-empty">--</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="column-tomorrow-m">
+                                            <?php
+                                            $tmr_m_temp = $city->tomorrow_morning_temp ?? '';
+                                            $tmr_m_cond = $city->tomorrow_morning_condition ?? '';
+                                            if ( $tmr_m_temp || $tmr_m_cond ) : ?>
+                                                <span class="awmp-temp"><?php echo esc_html( $tmr_m_temp ); ?></span>
+                                                <?php if ( $tmr_m_cond ) : ?>
+                                                    <span class="awmp-condition"><?php echo esc_html( $conditions[ $tmr_m_cond ] ?? $tmr_m_cond ); ?></span>
+                                                <?php endif; ?>
+                                            <?php else : ?>
+                                                <span class="awmp-empty">--</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="column-tomorrow-a">
+                                            <?php
+                                            $tmr_a_temp = $city->tomorrow_afternoon_temp ?? '';
+                                            $tmr_a_cond = $city->tomorrow_afternoon_condition ?? '';
+                                            if ( $tmr_a_temp || $tmr_a_cond ) : ?>
+                                                <span class="awmp-temp"><?php echo esc_html( $tmr_a_temp ); ?></span>
+                                                <?php if ( $tmr_a_cond ) : ?>
+                                                    <span class="awmp-condition"><?php echo esc_html( $conditions[ $tmr_a_cond ] ?? $tmr_a_cond ); ?></span>
                                                 <?php endif; ?>
                                             <?php else : ?>
                                                 <span class="awmp-empty">--</span>
@@ -436,6 +517,37 @@ class AWMP_Admin_Page {
 
         $cities = Ardennes_Weather_Map_Pro::get_cities();
         wp_send_json_success( [ 'cities' => $cities ] );
+    }
+
+    /**
+     * AJAX: Save display settings.
+     */
+    public function ajax_save_display_settings(): void {
+        check_ajax_referer( 'awmp_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Permissions insuffisantes.' ] );
+        }
+
+        $defaults = Ardennes_Weather_Map_Pro::get_default_display_settings();
+        $settings = [];
+
+        foreach ( $defaults as $key => $default_value ) {
+            $settings[ $key ] = isset( $_POST[ $key ] ) ? absint( $_POST[ $key ] ) : $default_value;
+        }
+
+        // Clamp values to reasonable ranges.
+        $settings['city_name_font_size'] = max( 10, min( 30, $settings['city_name_font_size'] ) );
+        $settings['temp_font_size']      = max( 10, min( 30, $settings['temp_font_size'] ) );
+        $settings['icon_size']           = max( 16, min( 60, $settings['icon_size'] ) );
+        $settings['dot_radius']          = max( 3, min( 15, $settings['dot_radius'] ) );
+
+        update_option( 'awmp_display_settings', $settings );
+
+        // Clear SVG boundary cache so settings take effect.
+        delete_transient( 'awmp_svg_boundary_path' );
+
+        wp_send_json_success( [ 'message' => 'Paramètres enregistrés avec succès.' ] );
     }
 
     /**

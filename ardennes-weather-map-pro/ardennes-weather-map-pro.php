@@ -3,7 +3,7 @@
  * Plugin Name: Ardennes Weather Map Pro
  * Plugin URI:  https://github.com/LePr0fesseur/Plugin-Meteo-Ardennes
  * Description: Affiche une carte météo interactive du département des Ardennes (France) avec récupération automatisée des données depuis Météo France et Meteo & Radar.
- * Version:     3.0.0
+ * Version:     4.0.0
  * Author:      Ardennes Weather Map Pro
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'AWMP_VERSION', '3.0.0' );
+define( 'AWMP_VERSION', '4.0.0' );
 define( 'AWMP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AWMP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AWMP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -38,7 +38,7 @@ final class Ardennes_Weather_Map_Pro {
     /**
      * DB schema version.
      */
-    public const DB_VERSION = '2.0.0';
+    public const DB_VERSION = '3.0.0';
 
     /**
      * Cron hook name.
@@ -95,6 +95,7 @@ final class Ardennes_Weather_Map_Pro {
             add_action( 'wp_ajax_awmp_delete_city', [ $admin, 'ajax_delete_city' ] );
             add_action( 'wp_ajax_awmp_get_cities', [ $admin, 'ajax_get_cities' ] );
             add_action( 'wp_ajax_awmp_manual_weather_update', [ $admin, 'ajax_manual_weather_update' ] );
+            add_action( 'wp_ajax_awmp_save_display_settings', [ $admin, 'ajax_save_display_settings' ] );
         }
 
         // Frontend hooks.
@@ -168,6 +169,16 @@ final class Ardennes_Weather_Map_Pro {
             temp_mr_afternoon DECIMAL(5,1) DEFAULT NULL,
             weather_code_morning INT DEFAULT NULL,
             weather_code_afternoon INT DEFAULT NULL,
+            tomorrow_morning_temp VARCHAR(10) DEFAULT '',
+            tomorrow_morning_condition VARCHAR(50) DEFAULT '',
+            tomorrow_afternoon_temp VARCHAR(10) DEFAULT '',
+            tomorrow_afternoon_condition VARCHAR(50) DEFAULT '',
+            temp_mf_tomorrow_morning DECIMAL(5,1) DEFAULT NULL,
+            temp_mf_tomorrow_afternoon DECIMAL(5,1) DEFAULT NULL,
+            temp_mr_tomorrow_morning DECIMAL(5,1) DEFAULT NULL,
+            temp_mr_tomorrow_afternoon DECIMAL(5,1) DEFAULT NULL,
+            weather_code_tomorrow_morning INT DEFAULT NULL,
+            weather_code_tomorrow_afternoon INT DEFAULT NULL,
             last_weather_update DATETIME DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -286,6 +297,31 @@ final class Ardennes_Weather_Map_Pro {
                 [ '%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s' ]
             );
         }
+    }
+
+    /**
+     * Default display settings.
+     *
+     * @return array<string, int>
+     */
+    public static function get_default_display_settings(): array {
+        return [
+            'city_name_font_size' => 18,
+            'temp_font_size'      => 18,
+            'icon_size'           => 34,
+            'dot_radius'          => 7,
+        ];
+    }
+
+    /**
+     * Get current display settings (merged with defaults).
+     *
+     * @return array<string, int>
+     */
+    public static function get_display_settings(): array {
+        $defaults = self::get_default_display_settings();
+        $saved    = get_option( 'awmp_display_settings', [] );
+        return wp_parse_args( $saved, $defaults );
     }
 
     /**

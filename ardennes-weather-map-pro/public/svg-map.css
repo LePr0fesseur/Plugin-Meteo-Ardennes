@@ -1,5 +1,5 @@
 /**
- * Ardennes Weather Map Pro - SVG Map Styles (V2)
+ * Ardennes Weather Map Pro - SVG Map Styles (V3)
  *
  * @package Ardennes_Weather_Map_Pro
  */
@@ -34,6 +34,44 @@
     font-weight: 700;
     letter-spacing: 0.3px;
     color: #fff;
+}
+
+/* ─── Switchers wrapper ─── */
+.awmp-switchers {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* ─── Day Switcher ─── */
+.awmp-day-switcher {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.awmp-day-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+.awmp-day-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.awmp-day-btn.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a5276;
 }
 
 /* ─── Period Switcher ─── */
@@ -78,6 +116,7 @@
     position: relative;
     background: transparent;
     line-height: 0;
+    overflow: hidden;
 }
 
 .awmp-svg-map {
@@ -121,6 +160,234 @@
 
 .awmp-weather-icon {
     pointer-events: none;
+}
+
+/* ================================================================== */
+/*  Weather Animation Overlay                                         */
+/* ================================================================== */
+
+.awmp-weather-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+    transition: opacity 0.6s ease;
+}
+
+/* ─── Sun (ensoleille) ─── */
+.awmp-weather-overlay[data-condition="ensoleille"]::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -20%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.08) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: awmp-sun-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes awmp-sun-glow {
+    0%   { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.15); opacity: 1; }
+}
+
+/* ─── Partly cloudy (eclaircies) ─── */
+.awmp-weather-overlay[data-condition="eclaircies"]::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(circle, rgba(255, 193, 7, 0.12) 0%, transparent 60%);
+    border-radius: 50%;
+    animation: awmp-sun-glow 5s ease-in-out infinite alternate;
+}
+
+.awmp-weather-overlay[data-condition="eclaircies"]::after {
+    content: '';
+    position: absolute;
+    top: 5%;
+    left: 0;
+    width: 120%;
+    height: 30%;
+    background:
+        radial-gradient(ellipse 80px 40px at 15% 50%, rgba(200, 200, 210, 0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 100px 50px at 55% 40%, rgba(200, 200, 210, 0.2) 0%, transparent 70%),
+        radial-gradient(ellipse 70px 35px at 85% 60%, rgba(200, 200, 210, 0.18) 0%, transparent 70%);
+    animation: awmp-cloud-drift 20s linear infinite;
+}
+
+/* ─── Overcast (couvert) ─── */
+.awmp-weather-overlay[data-condition="couvert"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -20%;
+    width: 140%;
+    height: 40%;
+    background:
+        radial-gradient(ellipse 120px 60px at 10% 50%, rgba(150, 160, 175, 0.3) 0%, transparent 70%),
+        radial-gradient(ellipse 150px 70px at 40% 40%, rgba(140, 150, 165, 0.28) 0%, transparent 70%),
+        radial-gradient(ellipse 100px 50px at 70% 55%, rgba(160, 170, 185, 0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 130px 60px at 95% 45%, rgba(145, 155, 170, 0.22) 0%, transparent 70%);
+    animation: awmp-cloud-drift 15s linear infinite;
+}
+
+.awmp-weather-overlay[data-condition="couvert"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(120, 130, 150, 0.06);
+}
+
+@keyframes awmp-cloud-drift {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-20%); }
+}
+
+/* ─── Fog (brouillard) ─── */
+.awmp-weather-overlay[data-condition="brouillard"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(220, 225, 235, 0.35) 40%,
+        rgba(200, 210, 225, 0.4) 70%,
+        rgba(220, 225, 235, 0.3) 100%
+    );
+    animation: awmp-fog-pulse 5s ease-in-out infinite alternate;
+}
+
+.awmp-weather-overlay[data-condition="brouillard"]::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: -30%;
+    width: 160%;
+    height: 60%;
+    background:
+        radial-gradient(ellipse 200px 80px at 20% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 70%),
+        radial-gradient(ellipse 250px 100px at 60% 40%, rgba(255, 255, 255, 0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 180px 70px at 90% 55%, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: awmp-fog-drift 12s linear infinite;
+}
+
+@keyframes awmp-fog-pulse {
+    0%   { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+@keyframes awmp-fog-drift {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-15%); }
+}
+
+/* ─── Rain (pluie) ─── */
+.awmp-weather-overlay[data-condition="pluie"] .awmp-particle {
+    position: absolute;
+    top: -20px;
+    width: 2px;
+    height: 18px;
+    background: linear-gradient(to bottom, transparent, rgba(130, 170, 220, 0.6));
+    border-radius: 0 0 2px 2px;
+    animation: awmp-rain-fall linear infinite;
+}
+
+.awmp-weather-overlay[data-condition="pluie"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(100, 120, 160, 0.04);
+}
+
+@keyframes awmp-rain-fall {
+    0%   { transform: translateY(-20px); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(calc(100vh)); opacity: 0; }
+}
+
+/* ─── Snow (neige) ─── */
+.awmp-weather-overlay[data-condition="neige"] .awmp-particle {
+    position: absolute;
+    top: -12px;
+    width: 7px;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+    animation: awmp-snow-fall linear infinite;
+}
+
+@keyframes awmp-snow-fall {
+    0%   { transform: translateY(-12px) translateX(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.9; }
+    25%  { transform: translateY(25vh) translateX(15px) rotate(90deg); }
+    50%  { transform: translateY(50vh) translateX(-10px) rotate(180deg); }
+    75%  { transform: translateY(75vh) translateX(12px) rotate(270deg); }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(100vh) translateX(-5px) rotate(360deg); opacity: 0; }
+}
+
+/* ─── Sleet (pluie-neige) ─── */
+.awmp-weather-overlay[data-condition="pluie-neige"] .awmp-particle-rain {
+    position: absolute;
+    top: -20px;
+    width: 2px;
+    height: 14px;
+    background: linear-gradient(to bottom, transparent, rgba(130, 170, 220, 0.5));
+    border-radius: 0 0 2px 2px;
+    animation: awmp-rain-fall linear infinite;
+}
+
+.awmp-weather-overlay[data-condition="pluie-neige"] .awmp-particle-snow {
+    position: absolute;
+    top: -10px;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 50%;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+    animation: awmp-snow-fall linear infinite;
+}
+
+/* ─── Thunder (orage) ─── */
+.awmp-weather-overlay[data-condition="orage"] .awmp-particle {
+    position: absolute;
+    top: -20px;
+    width: 2px;
+    height: 22px;
+    background: linear-gradient(to bottom, transparent, rgba(100, 140, 200, 0.7));
+    border-radius: 0 0 2px 2px;
+    animation: awmp-rain-fall linear infinite;
+}
+
+.awmp-weather-overlay[data-condition="orage"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(80, 90, 120, 0.06);
+}
+
+.awmp-weather-overlay[data-condition="orage"]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0);
+    animation: awmp-lightning 5s ease-in-out infinite;
+}
+
+@keyframes awmp-lightning {
+    0%, 92%  { background: rgba(255, 255, 255, 0); }
+    93%      { background: rgba(255, 255, 220, 0.25); }
+    94%      { background: rgba(255, 255, 255, 0); }
+    95%      { background: rgba(255, 255, 220, 0.15); }
+    96%, 100% { background: rgba(255, 255, 255, 0); }
 }
 
 /* ─── Legend ─── */
@@ -179,6 +446,23 @@
 
     .awmp-title {
         font-size: 17px;
+    }
+
+    .awmp-switchers {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .awmp-day-switcher,
+    .awmp-period-switcher {
+        width: 100%;
+    }
+
+    .awmp-day-btn,
+    .awmp-period-btn {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
     }
 
     .awmp-svg-map {
