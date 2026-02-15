@@ -71,23 +71,31 @@ class AWMP_Map_Display {
             $this->enqueued = true;
         }
 
-        $cities   = Ardennes_Weather_Map_Pro::get_cities();
+        $cities      = Ardennes_Weather_Map_Pro::get_cities();
         $geojson_url = AWMP_PLUGIN_URL . 'assets/geojson/ardennes.geojson';
 
         // Condition to icon filename mapping.
         $icon_map = [
+            'ensoleille'  => 'sun.svg',
+            'eclaircies'  => 'partly-cloudy.svg',
             'couvert'     => 'cloud.svg',
-            'neige'       => 'snow.svg',
+            'brouillard'  => 'fog.svg',
             'pluie'       => 'rain.svg',
             'pluie-neige' => 'rain-snow.svg',
+            'neige'       => 'snow.svg',
+            'orage'       => 'thunder.svg',
         ];
 
         // Condition labels.
         $condition_labels = [
+            'ensoleille'  => 'Ensoleillé',
+            'eclaircies'  => 'Éclaircies',
             'couvert'     => 'Couvert',
-            'neige'       => 'Neige',
+            'brouillard'  => 'Brouillard',
             'pluie'       => 'Pluie',
             'pluie-neige' => 'Pluie-Neige',
+            'neige'       => 'Neige',
+            'orage'       => 'Orage',
         ];
 
         // Prepare cities data for JS.
@@ -111,6 +119,12 @@ class AWMP_Map_Display {
                     : '',
             ];
         }
+
+        // Get last update time.
+        $last_update = get_option( 'awmp_last_weather_update', '' );
+        $last_update_display = $last_update
+            ? wp_date( 'd/m/Y à H:i', strtotime( $last_update ), new DateTimeZone( 'Europe/Paris' ) )
+            : '';
 
         wp_localize_script( 'awmp-front-map', 'awmpMap', [
             'geojsonUrl' => $geojson_url,
@@ -137,8 +151,20 @@ class AWMP_Map_Display {
             </div>
             <div class="awmp-legend">
                 <span class="awmp-legend-item">
+                    <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/sun.svg' ); ?>" alt="" width="20" height="20">
+                    Ensoleillé
+                </span>
+                <span class="awmp-legend-item">
+                    <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/partly-cloudy.svg' ); ?>" alt="" width="20" height="20">
+                    Éclaircies
+                </span>
+                <span class="awmp-legend-item">
                     <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/cloud.svg' ); ?>" alt="" width="20" height="20">
                     Couvert
+                </span>
+                <span class="awmp-legend-item">
+                    <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/fog.svg' ); ?>" alt="" width="20" height="20">
+                    Brouillard
                 </span>
                 <span class="awmp-legend-item">
                     <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/rain.svg' ); ?>" alt="" width="20" height="20">
@@ -152,7 +178,17 @@ class AWMP_Map_Display {
                     <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/rain-snow.svg' ); ?>" alt="" width="20" height="20">
                     Pluie-Neige
                 </span>
+                <span class="awmp-legend-item">
+                    <img src="<?php echo esc_url( AWMP_PLUGIN_URL . 'assets/icons/thunder.svg' ); ?>" alt="" width="20" height="20">
+                    Orage
+                </span>
             </div>
+            <?php if ( $last_update_display ) : ?>
+                <div class="awmp-footer">
+                    <span class="awmp-last-update">Dernière mise à jour : <?php echo esc_html( $last_update_display ); ?></span>
+                    <span class="awmp-source-label">Sources : Météo France / Meteo &amp; Radar</span>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
         return ob_get_clean();

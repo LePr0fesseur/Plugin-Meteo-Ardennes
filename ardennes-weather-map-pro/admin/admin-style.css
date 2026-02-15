@@ -22,7 +22,152 @@
 }
 
 .awmp-admin-container {
-    max-width: 1100px;
+    max-width: 1200px;
+}
+
+/* Weather Update Section */
+.awmp-update-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.awmp-update-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.awmp-update-info h2 {
+    margin: 0 0 8px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.awmp-update-info h2 .dashicons {
+    color: #2271b1;
+}
+
+.awmp-update-details {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.awmp-update-detail {
+    font-size: 13px;
+    color: #50575e;
+}
+
+.awmp-update-detail strong {
+    color: #1d2327;
+}
+
+.awmp-update-actions .button .dashicons {
+    vertical-align: middle;
+    margin-right: 4px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1.4;
+}
+
+/* Spinner animation */
+@keyframes awmp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.awmp-spin {
+    animation: awmp-spin 1s linear infinite;
+    display: inline-block;
+}
+
+/* Progress bar */
+.awmp-progress-bar {
+    height: 4px;
+    background: #dcdcde;
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.awmp-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    border-radius: 2px;
+    animation: awmp-progress 2s ease-in-out infinite;
+}
+
+@keyframes awmp-progress {
+    0% { width: 0; }
+    50% { width: 80%; }
+    100% { width: 100%; }
+}
+
+.awmp-progress-text {
+    font-size: 12px;
+    color: #50575e;
+    margin-top: 6px;
+    display: block;
+}
+
+/* Sources Info */
+.awmp-sources-info {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+    border-radius: 4px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+}
+
+.awmp-sources-info h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+
+.awmp-sources-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.awmp-source {
+    flex: 1;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 10px 14px;
+}
+
+.awmp-source strong {
+    display: block;
+    font-size: 13px;
+    color: #1d2327;
+    margin-bottom: 2px;
+}
+
+.awmp-source-desc {
+    font-size: 12px;
+    color: #50575e;
+}
+
+.awmp-source-note {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #50575e;
 }
 
 /* Form Section */
@@ -173,20 +318,28 @@
 }
 
 #awmp-cities-table .column-name {
-    width: 22%;
+    width: 18%;
 }
 
-#awmp-cities-table .column-coords {
-    width: 18%;
+#awmp-cities-table .column-postal {
+    width: 6%;
 }
 
 #awmp-cities-table .column-morning,
 #awmp-cities-table .column-afternoon {
-    width: 20%;
+    width: 16%;
+}
+
+#awmp-cities-table .column-sources {
+    width: 18%;
+}
+
+#awmp-cities-table .column-update {
+    width: 9%;
 }
 
 #awmp-cities-table .column-actions {
-    width: 20%;
+    width: 17%;
 }
 
 #awmp-cities-table .awmp-temp {
@@ -219,6 +372,31 @@
     background: #f8d7da;
 }
 
+/* City links */
+.awmp-city-links {
+    margin-top: 2px;
+}
+
+.awmp-city-links a {
+    font-size: 11px;
+    margin-right: 6px;
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.awmp-city-links a:hover {
+    text-decoration: underline;
+}
+
+/* Source temperatures */
+.awmp-source-temps {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    color: #50575e;
+}
+
 /* Responsive */
 @media screen and (max-width: 782px) {
     .awmp-form-row {
@@ -226,7 +404,18 @@
         gap: 8px;
     }
 
-    #awmp-cities-table .column-coords {
+    #awmp-cities-table .column-postal,
+    #awmp-cities-table .column-sources,
+    #awmp-cities-table .column-update {
         display: none;
+    }
+
+    .awmp-update-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .awmp-sources-grid {
+        flex-direction: column;
     }
 }

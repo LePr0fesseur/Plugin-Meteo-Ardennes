@@ -19,10 +19,14 @@ class AWMP_Admin_Page {
      */
     private const CONDITIONS = [
         ''            => '-- Aucune --',
+        'ensoleille'  => 'Ensoleillé',
+        'eclaircies'  => 'Éclaircies',
         'couvert'     => 'Couvert',
-        'neige'       => 'Neige',
+        'brouillard'  => 'Brouillard',
         'pluie'       => 'Pluie',
         'pluie-neige' => 'Pluie-Neige',
+        'neige'       => 'Neige',
+        'orage'       => 'Orage',
     ];
 
     /**
@@ -31,7 +35,7 @@ class AWMP_Admin_Page {
     public function add_menu_page(): void {
         add_menu_page(
             'Ardennes Weather Map',
-            'Ardennes Weather Map',
+            'Météo Ardennes',
             'manage_options',
             'ardennes-weather-map',
             [ $this, 'render_page' ],
@@ -77,8 +81,13 @@ class AWMP_Admin_Page {
             return;
         }
 
-        $cities     = Ardennes_Weather_Map_Pro::get_cities();
-        $conditions = self::CONDITIONS;
+        $cities            = Ardennes_Weather_Map_Pro::get_cities();
+        $conditions        = self::CONDITIONS;
+        $last_update       = get_option( 'awmp_last_weather_update', '' );
+        $next_cron         = wp_next_scheduled( Ardennes_Weather_Map_Pro::CRON_HOOK );
+        $next_cron_display = $next_cron
+            ? wp_date( 'd/m/Y H:i', $next_cron, new DateTimeZone( 'Europe/Paris' ) )
+            : 'Non programmé';
         ?>
         <div class="wrap awmp-admin-wrap">
             <h1>
@@ -87,6 +96,54 @@ class AWMP_Admin_Page {
             </h1>
 
             <div class="awmp-admin-container">
+                <!-- Weather Update Section -->
+                <div class="awmp-update-section">
+                    <div class="awmp-update-header">
+                        <div class="awmp-update-info">
+                            <h2><span class="dashicons dashicons-update"></span> Mise à jour météo</h2>
+                            <div class="awmp-update-details">
+                                <span class="awmp-update-detail">
+                                    <strong>Dernière MAJ :</strong>
+                                    <?php echo esc_html( $last_update ? wp_date( 'd/m/Y à H:i', strtotime( $last_update ), new DateTimeZone( 'Europe/Paris' ) ) : 'Jamais' ); ?>
+                                </span>
+                                <span class="awmp-update-detail">
+                                    <strong>Prochaine MAJ :</strong>
+                                    <?php echo esc_html( $next_cron_display ); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="awmp-update-actions">
+                            <button type="button" class="button button-primary" id="awmp-manual-update-btn">
+                                <span class="dashicons dashicons-download"></span>
+                                Mettre à jour maintenant
+                            </button>
+                        </div>
+                    </div>
+                    <div id="awmp-update-message"></div>
+                    <div id="awmp-update-progress" style="display:none;">
+                        <div class="awmp-progress-bar">
+                            <div class="awmp-progress-fill"></div>
+                        </div>
+                        <span class="awmp-progress-text">Récupération des données en cours...</span>
+                    </div>
+                </div>
+
+                <!-- Sources Info -->
+                <div class="awmp-sources-info">
+                    <h3>Sources de données</h3>
+                    <div class="awmp-sources-grid">
+                        <div class="awmp-source">
+                            <strong>Météo France</strong>
+                            <span class="awmp-source-desc">Modèles ARPEGE/AROME — Températures + conditions</span>
+                        </div>
+                        <div class="awmp-source">
+                            <strong>Meteo &amp; Radar</strong>
+                            <span class="awmp-source-desc">Modèle multi-sources — Températures uniquement</span>
+                        </div>
+                    </div>
+                    <p class="awmp-source-note">Les températures affichées sont la <strong>moyenne</strong> des deux sources. Les conditions météo proviennent de Météo France.</p>
+                </div>
+
                 <!-- City Form -->
                 <div class="awmp-form-section">
                     <h2 id="awmp-form-title">Ajouter une ville</h2>
@@ -94,9 +151,13 @@ class AWMP_Admin_Page {
                         <input type="hidden" id="awmp-city-id" name="city_id" value="">
 
                         <div class="awmp-form-row">
-                            <div class="awmp-form-group">
+                            <div class="awmp-form-group" style="flex:2;">
                                 <label for="awmp-city-name">Nom de la ville</label>
                                 <input type="text" id="awmp-city-name" name="city_name" required placeholder="Ex: Charleville-Mézières">
+                            </div>
+                            <div class="awmp-form-group" style="flex:1;">
+                                <label for="awmp-postal-code">Code postal</label>
+                                <input type="text" id="awmp-postal-code" name="postal_code" placeholder="Ex: 08000" maxlength="10" pattern="[0-9]{5}">
                             </div>
                         </div>
 
@@ -168,30 +229,38 @@ class AWMP_Admin_Page {
 
                 <!-- Cities Table -->
                 <div class="awmp-table-section">
-                    <h2>Villes enregistrées</h2>
+                    <h2>Villes enregistrées (<?php echo count( $cities ); ?>)</h2>
                     <table class="wp-list-table widefat fixed striped" id="awmp-cities-table">
                         <thead>
                             <tr>
                                 <th class="column-name">Ville</th>
-                                <th class="column-coords">Coordonnées</th>
+                                <th class="column-postal">CP</th>
                                 <th class="column-morning">Matin</th>
                                 <th class="column-afternoon">Après-midi</th>
+                                <th class="column-sources">Sources (MF / MR)</th>
+                                <th class="column-update">MAJ</th>
                                 <th class="column-actions">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ( empty( $cities ) ) : ?>
                                 <tr class="awmp-no-cities">
-                                    <td colspan="5">Aucune ville enregistrée.</td>
+                                    <td colspan="7">Aucune ville enregistrée.</td>
                                 </tr>
                             <?php else : ?>
                                 <?php foreach ( $cities as $city ) : ?>
                                     <tr data-id="<?php echo esc_attr( $city->id ); ?>">
                                         <td class="column-name">
                                             <strong><?php echo esc_html( $city->city_name ); ?></strong>
+                                            <div class="awmp-city-links">
+                                                <?php if ( ! empty( $city->postal_code ) ) : ?>
+                                                    <a href="<?php echo esc_url( AWMP_Weather_Fetcher::get_meteo_france_url( $city->city_name, $city->postal_code ) ); ?>" target="_blank" rel="noopener" title="Météo France">MF</a>
+                                                <?php endif; ?>
+                                                <a href="<?php echo esc_url( AWMP_Weather_Fetcher::get_meteo_radar_url( $city->city_name ) ); ?>" target="_blank" rel="noopener" title="Meteo &amp; Radar">MR</a>
+                                            </div>
                                         </td>
-                                        <td class="column-coords">
-                                            <?php echo esc_html( $city->latitude ); ?>, <?php echo esc_html( $city->longitude ); ?>
+                                        <td class="column-postal">
+                                            <?php echo esc_html( $city->postal_code ?: '--' ); ?>
                                         </td>
                                         <td class="column-morning">
                                             <?php if ( $city->morning_temp || $city->morning_condition ) : ?>
@@ -212,6 +281,33 @@ class AWMP_Admin_Page {
                                             <?php else : ?>
                                                 <span class="awmp-empty">--</span>
                                             <?php endif; ?>
+                                        </td>
+                                        <td class="column-sources">
+                                            <?php
+                                            $has_sources = ! is_null( $city->temp_mf_morning ?? null );
+                                            if ( $has_sources ) :
+                                                $mf_m = isset( $city->temp_mf_morning ) ? round( $city->temp_mf_morning, 1 ) . '°' : '--';
+                                                $mr_m = isset( $city->temp_mr_morning ) ? round( $city->temp_mr_morning, 1 ) . '°' : '--';
+                                                $mf_a = isset( $city->temp_mf_afternoon ) ? round( $city->temp_mf_afternoon, 1 ) . '°' : '--';
+                                                $mr_a = isset( $city->temp_mr_afternoon ) ? round( $city->temp_mr_afternoon, 1 ) . '°' : '--';
+                                            ?>
+                                                <span class="awmp-source-temps">
+                                                    <span title="Matin: MF / MR">M: <?php echo esc_html( $mf_m . ' / ' . $mr_m ); ?></span>
+                                                    <span title="AM: MF / MR">AM: <?php echo esc_html( $mf_a . ' / ' . $mr_a ); ?></span>
+                                                </span>
+                                            <?php else : ?>
+                                                <span class="awmp-empty">--</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="column-update">
+                                            <?php
+                                            $update_time = $city->last_weather_update ?? null;
+                                            if ( $update_time ) :
+                                                echo esc_html( wp_date( 'd/m H:i', strtotime( $update_time ), new DateTimeZone( 'Europe/Paris' ) ) );
+                                            else :
+                                                echo '<span class="awmp-empty">--</span>';
+                                            endif;
+                                            ?>
                                         </td>
                                         <td class="column-actions">
                                             <button type="button" class="button button-small awmp-edit-btn"
@@ -250,6 +346,7 @@ class AWMP_Admin_Page {
 
         $city_id             = isset( $_POST['city_id'] ) ? absint( $_POST['city_id'] ) : 0;
         $city_name           = isset( $_POST['city_name'] ) ? sanitize_text_field( wp_unslash( $_POST['city_name'] ) ) : '';
+        $postal_code         = isset( $_POST['postal_code'] ) ? sanitize_text_field( wp_unslash( $_POST['postal_code'] ) ) : '';
         $latitude            = isset( $_POST['latitude'] ) ? floatval( $_POST['latitude'] ) : 0;
         $longitude           = isset( $_POST['longitude'] ) ? floatval( $_POST['longitude'] ) : 0;
         $morning_temp        = isset( $_POST['morning_temp'] ) ? sanitize_text_field( wp_unslash( $_POST['morning_temp'] ) ) : '';
@@ -265,7 +362,7 @@ class AWMP_Admin_Page {
             wp_send_json_error( [ 'message' => 'Les coordonnées ne semblent pas être dans les Ardennes.' ] );
         }
 
-        $allowed_conditions = [ '', 'couvert', 'neige', 'pluie', 'pluie-neige' ];
+        $allowed_conditions = array_keys( self::CONDITIONS );
         if ( ! in_array( $morning_condition, $allowed_conditions, true ) ) {
             $morning_condition = '';
         }
@@ -275,6 +372,7 @@ class AWMP_Admin_Page {
 
         $data   = [
             'city_name'           => $city_name,
+            'postal_code'         => $postal_code,
             'latitude'            => $latitude,
             'longitude'           => $longitude,
             'morning_temp'        => $morning_temp,
@@ -282,7 +380,7 @@ class AWMP_Admin_Page {
             'afternoon_temp'      => $afternoon_temp,
             'afternoon_condition' => $afternoon_condition,
         ];
-        $format = [ '%s', '%f', '%f', '%s', '%s', '%s', '%s' ];
+        $format = [ '%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s' ];
 
         if ( $city_id > 0 ) {
             $result = $wpdb->update( $table_name, $data, [ 'id' => $city_id ], $format, [ '%d' ] );
@@ -338,5 +436,29 @@ class AWMP_Admin_Page {
 
         $cities = Ardennes_Weather_Map_Pro::get_cities();
         wp_send_json_success( [ 'cities' => $cities ] );
+    }
+
+    /**
+     * AJAX: Trigger a manual weather data update.
+     */
+    public function ajax_manual_weather_update(): void {
+        check_ajax_referer( 'awmp_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Permissions insuffisantes.' ] );
+        }
+
+        $result = AWMP_Weather_Fetcher::update_all_cities();
+
+        $message = sprintf( '%d ville(s) mise(s) à jour.', $result['updated'] );
+        if ( ! empty( $result['errors'] ) ) {
+            $message .= ' Erreurs : ' . implode( ' | ', $result['errors'] );
+        }
+
+        wp_send_json_success( [
+            'message' => $message,
+            'updated' => $result['updated'],
+            'errors'  => $result['errors'],
+        ] );
     }
 }

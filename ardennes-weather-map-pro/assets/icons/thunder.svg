@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Cloud -->
+  <path d="M16 36a7 7 0 0 1 0-14h0.5a12 12 0 0 1 23-2A8 8 0 0 1 48 28a8 8 0 0 1-8 8H16z" fill="#78909c" stroke="#546e7a" stroke-width="1.5"/>
+  <!-- Lightning bolt -->
+  <polygon points="30,34 24,46 30,46 27,58 40,42 33,42 38,34" fill="#fdd835" stroke="#f9a825" stroke-width="1" stroke-linejoin="round"/>
+</svg>

@@ -28,12 +28,12 @@
     /**
      * Show a feedback message.
      */
-    function showMessage(text, isError) {
+    function showMessage(container, text, isError) {
         const cssClass = isError ? 'awmp-msg-error' : 'awmp-msg-success';
-        messageBox.html('<div class="' + cssClass + '">' + text + '</div>');
+        $(container).html('<div class="' + cssClass + '">' + text + '</div>');
         setTimeout(function () {
-            messageBox.empty();
-        }, 4000);
+            $(container).empty();
+        }, 6000);
     }
 
     /**
@@ -47,6 +47,7 @@
             nonce:               awmpAdmin.nonce,
             city_id:             cityIdField.val(),
             city_name:           $('#awmp-city-name').val(),
+            postal_code:         $('#awmp-postal-code').val(),
             latitude:            $('#awmp-latitude').val(),
             longitude:           $('#awmp-longitude').val(),
             morning_temp:        $('#awmp-morning-temp').val(),
@@ -59,16 +60,16 @@
 
         $.post(awmpAdmin.ajaxUrl, data, function (response) {
             if (response.success) {
-                showMessage(response.data.message, false);
+                showMessage('#awmp-form-message', response.data.message, false);
                 setTimeout(function () {
                     location.reload();
                 }, 800);
             } else {
-                showMessage(response.data.message, true);
+                showMessage('#awmp-form-message', response.data.message, true);
                 submitBtn.prop('disabled', false).text('Enregistrer la ville');
             }
         }).fail(function () {
-            showMessage('Erreur de communication avec le serveur.', true);
+            showMessage('#awmp-form-message', 'Erreur de communication avec le serveur.', true);
             submitBtn.prop('disabled', false).text('Enregistrer la ville');
         });
     });
@@ -81,6 +82,7 @@
 
         cityIdField.val(city.id);
         $('#awmp-city-name').val(city.city_name);
+        $('#awmp-postal-code').val(city.postal_code || '');
         $('#awmp-latitude').val(city.latitude);
         $('#awmp-longitude').val(city.longitude);
         $('#awmp-morning-temp').val(city.morning_temp);
@@ -112,15 +114,15 @@
             city_id: cityId
         }, function (response) {
             if (response.success) {
-                showMessage(response.data.message, false);
+                showMessage('#awmp-form-message', response.data.message, false);
                 setTimeout(function () {
                     location.reload();
                 }, 800);
             } else {
-                showMessage(response.data.message, true);
+                showMessage('#awmp-form-message', response.data.message, true);
             }
         }).fail(function () {
-            showMessage('Erreur de communication avec le serveur.', true);
+            showMessage('#awmp-form-message', 'Erreur de communication avec le serveur.', true);
         });
     });
 
@@ -129,6 +131,56 @@
      */
     cancelBtn.on('click', function () {
         resetForm();
+    });
+
+    /**
+     * Handle manual weather update button.
+     */
+    $('#awmp-manual-update-btn').on('click', function () {
+        const btn      = $(this);
+        const progress = $('#awmp-update-progress');
+        const msgBox   = $('#awmp-update-message');
+
+        btn.prop('disabled', true).find('.dashicons').addClass('awmp-spin');
+        progress.show();
+        msgBox.empty();
+
+        $.post(awmpAdmin.ajaxUrl, {
+            action: 'awmp_manual_weather_update',
+            nonce:  awmpAdmin.nonce
+        }, function (response) {
+            progress.hide();
+            btn.prop('disabled', false).find('.dashicons').removeClass('awmp-spin');
+
+            if (response.success) {
+                const hasErrors = response.data.errors && response.data.errors.length > 0;
+                let html = '<div class="' + (hasErrors ? 'awmp-msg-error' : 'awmp-msg-success') + '">';
+                html += '<strong>' + response.data.updated + ' ville(s) mise(s) à jour.</strong>';
+
+                if (hasErrors) {
+                    html += '<ul style="margin:6px 0 0;padding-left:18px;">';
+                    response.data.errors.forEach(function (err) {
+                        html += '<li>' + err + '</li>';
+                    });
+                    html += '</ul>';
+                }
+
+                html += '</div>';
+                msgBox.html(html);
+
+                if (response.data.updated > 0) {
+                    setTimeout(function () {
+                        location.reload();
+                    }, 2000);
+                }
+            } else {
+                showMessage('#awmp-update-message', response.data.message, true);
+            }
+        }).fail(function () {
+            progress.hide();
+            btn.prop('disabled', false).find('.dashicons').removeClass('awmp-spin');
+            showMessage('#awmp-update-message', 'Erreur de communication avec le serveur.', true);
+        });
     });
 
 })(jQuery);
