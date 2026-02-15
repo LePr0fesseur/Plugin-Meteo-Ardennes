@@ -110,7 +110,7 @@ class AWMP_Weather_Fetcher {
      * @param object $city Database city row.
      * @return true|string True on success, error message on failure.
      */
-    private static function fetch_and_store_city( object $city ): true|string {
+    private static function fetch_and_store_city( object $city ): bool|string {
         $lat = (float) $city->latitude;
         $lon = (float) $city->longitude;
 
@@ -295,7 +295,7 @@ class AWMP_Weather_Fetcher {
      * @param array $data    Weather data to store.
      * @return true|string True on success, error message on failure.
      */
-    private static function store_weather_data( int $city_id, array $data ): true|string {
+    private static function store_weather_data( int $city_id, array $data ): bool|string {
         global $wpdb;
         $table_name = $wpdb->prefix . Ardennes_Weather_Map_Pro::TABLE_NAME;
 
