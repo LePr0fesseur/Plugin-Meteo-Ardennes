@@ -3,7 +3,7 @@
  * Plugin Name: Ardennes Weather Map Pro
  * Plugin URI:  https://github.com/LePr0fesseur/Plugin-Meteo-Ardennes
  * Description: Affiche une carte météo interactive du département des Ardennes (France) avec récupération automatisée des données depuis Météo France et Meteo & Radar.
- * Version:     2.0.0
+ * Version:     3.0.0
  * Author:      Ardennes Weather Map Pro
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'AWMP_VERSION', '2.0.0' );
+define( 'AWMP_VERSION', '3.0.0' );
 define( 'AWMP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AWMP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AWMP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -69,6 +69,7 @@ final class Ardennes_Weather_Map_Pro {
     private function load_dependencies(): void {
         require_once AWMP_PLUGIN_DIR . 'includes/class-weather-fetcher.php';
         require_once AWMP_PLUGIN_DIR . 'admin/admin-page.php';
+        require_once AWMP_PLUGIN_DIR . 'public/svg-map.php';
         require_once AWMP_PLUGIN_DIR . 'public/map-display.php';
     }
 

@@ -2,6 +2,8 @@
 /**
  * Frontend map display for Ardennes Weather Map Pro.
  *
+ * Renders the [ardennes_weather_map] shortcode using an inline SVG map.
+ *
  * @package Ardennes_Weather_Map_Pro
  */
 
@@ -23,36 +25,19 @@ class AWMP_Map_Display {
      * Register frontend assets (loaded conditionally).
      */
     public function register_assets(): void {
-        // Leaflet CSS.
-        wp_register_style(
-            'leaflet',
-            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-            [],
-            '1.9.4'
-        );
-
-        // Plugin frontend CSS.
+        // Plugin frontend CSS (SVG version — no external dependency).
         wp_register_style(
             'awmp-front-style',
-            AWMP_PLUGIN_URL . 'public/style.css',
-            [ 'leaflet' ],
+            AWMP_PLUGIN_URL . 'public/svg-map.css',
+            [],
             AWMP_VERSION
         );
 
-        // Leaflet JS.
-        wp_register_script(
-            'leaflet',
-            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-            [],
-            '1.9.4',
-            true
-        );
-
-        // Plugin frontend JS.
+        // Plugin frontend JS (vanilla — no external dependency).
         wp_register_script(
             'awmp-front-map',
-            AWMP_PLUGIN_URL . 'public/map.js',
-            [ 'leaflet' ],
+            AWMP_PLUGIN_URL . 'public/svg-map.js',
+            [],
             AWMP_VERSION,
             true
         );
@@ -64,27 +49,12 @@ class AWMP_Map_Display {
     public function render_shortcode(): string {
         // Enqueue assets only when shortcode is used.
         if ( ! $this->enqueued ) {
-            wp_enqueue_style( 'leaflet' );
             wp_enqueue_style( 'awmp-front-style' );
-            wp_enqueue_script( 'leaflet' );
             wp_enqueue_script( 'awmp-front-map' );
             $this->enqueued = true;
         }
 
-        $cities      = Ardennes_Weather_Map_Pro::get_cities();
-        $geojson_url = AWMP_PLUGIN_URL . 'assets/geojson/ardennes.geojson';
-
-        // Condition to icon filename mapping.
-        $icon_map = [
-            'ensoleille'  => 'sun.svg',
-            'eclaircies'  => 'partly-cloudy.svg',
-            'couvert'     => 'cloud.svg',
-            'brouillard'  => 'fog.svg',
-            'pluie'       => 'rain.svg',
-            'pluie-neige' => 'rain-snow.svg',
-            'neige'       => 'snow.svg',
-            'orage'       => 'thunder.svg',
-        ];
+        $cities = Ardennes_Weather_Map_Pro::get_cities();
 
         // Condition labels.
         $condition_labels = [
@@ -98,7 +68,7 @@ class AWMP_Map_Display {
             'orage'       => 'Orage',
         ];
 
-        // Prepare cities data for JS.
+        // Prepare cities data for both PHP SVG render and JS dynamic updates.
         $cities_data = [];
         foreach ( $cities as $city ) {
             $cities_data[] = [
@@ -108,15 +78,9 @@ class AWMP_Map_Display {
                 'morning_temp'        => $city->morning_temp,
                 'morning_condition'   => $city->morning_condition,
                 'morning_label'       => $condition_labels[ $city->morning_condition ] ?? '',
-                'morning_icon'        => isset( $icon_map[ $city->morning_condition ] )
-                    ? AWMP_PLUGIN_URL . 'assets/icons/' . $icon_map[ $city->morning_condition ]
-                    : '',
                 'afternoon_temp'      => $city->afternoon_temp,
                 'afternoon_condition' => $city->afternoon_condition,
                 'afternoon_label'     => $condition_labels[ $city->afternoon_condition ] ?? '',
-                'afternoon_icon'      => isset( $icon_map[ $city->afternoon_condition ] )
-                    ? AWMP_PLUGIN_URL . 'assets/icons/' . $icon_map[ $city->afternoon_condition ]
-                    : '',
             ];
         }
 
@@ -126,11 +90,14 @@ class AWMP_Map_Display {
             ? wp_date( 'd/m/Y à H:i', strtotime( $last_update ), new DateTimeZone( 'Europe/Paris' ) )
             : '';
 
-        wp_localize_script( 'awmp-front-map', 'awmpMap', [
-            'geojsonUrl' => $geojson_url,
-            'cities'     => $cities_data,
-            'iconsUrl'   => AWMP_PLUGIN_URL . 'assets/icons/',
+        // Pass data to JS for dynamic period switching.
+        wp_localize_script( 'awmp-front-map', 'awmpMapData', [
+            'cities' => $cities_data,
         ] );
+
+        // Generate the inline SVG map (morning data rendered by default).
+        $icons_dir = AWMP_PLUGIN_DIR . 'assets/icons/';
+        $svg_html  = AWMP_SVG_Map::render( $cities_data, $icons_dir );
 
         ob_start();
         ?>
@@ -147,7 +114,7 @@ class AWMP_Map_Display {
                 </div>
             </div>
             <div class="awmp-map-container">
-                <div id="awmp-map"></div>
+                <?php echo $svg_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG generated internally. ?>
             </div>
             <div class="awmp-legend">
                 <span class="awmp-legend-item">
