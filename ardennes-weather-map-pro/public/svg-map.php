@@ -64,22 +64,20 @@ class AWMP_SVG_Map {
      *
      * @var array<string, array{string, int, int}>
      */
-    private const LABEL_OFFSETS = [
-        'charleville-mezieres'  => [ 'middle', 0, -42 ],
-        'sedan'                 => [ 'middle', 0, -42 ],
-        'carignan'              => [ 'middle', 0, -42 ],
-        'tremblois-les-rocrois' => [ 'middle', 0, -42 ],
-        'signy-le-petit'        => [ 'middle', 0, -42 ],
-        'les-hautes-rivieres'   => [ 'start', 14, -10 ],
-        'givet'                 => [ 'middle', 0, -42 ],
-        'revin'                 => [ 'end', -14, -10 ],
-        'vaux-les-rubigny'      => [ 'middle', 0, -42 ],
-        'saint-germainmont'     => [ 'middle', 0, -42 ],
-        'rethel'                => [ 'middle', 0, -42 ],
-        'vouziers'              => [ 'middle', 0, -42 ],
-        'tailly'                => [ 'start', 14, -10 ],
-        'verrieres'             => [ 'end', -14, 6 ],
-        'omont'                 => [ 'middle', 0, -42 ],
+    /**
+     * Per-city label anchor direction.
+     *
+     * Only cities that need a non-default anchor are listed.
+     * Default for all others is 'middle' (label centered above).
+     * Values: 'start' = label to the right, 'end' = label to the left.
+     *
+     * @var array<string, string>
+     */
+    private const LABEL_ANCHORS = [
+        'les-hautes-rivieres' => 'start',
+        'revin'               => 'end',
+        'tailly'              => 'start',
+        'verrieres'           => 'end',
     ];
 
     /**
@@ -330,21 +328,23 @@ class AWMP_SVG_Map {
         $badge_w     = (int) round( $temp_fs * 3.56 );
         $badge_rx    = (int) round( $badge_h / 2 );
         $weather_dy  = $temp_fs;
-        $label_dy    = (int) round( $name_fs * 2.33 );
 
-        // Label offset.
-        $default_offset = [ 'middle', 0, -$label_dy ];
-        $offset = self::LABEL_OFFSETS[ $slug ] ?? $default_offset;
-        // Scale the stored offsets proportionally if using named offsets.
-        $anchor = $offset[0];
-        $ldx    = $offset[1];
-        // For side-anchored labels, recalculate dx based on dot radius.
-        if ( 'start' === $anchor && isset( self::LABEL_OFFSETS[ $slug ] ) ) {
-            $ldx = $dot_r * 2;
-        } elseif ( 'end' === $anchor && isset( self::LABEL_OFFSETS[ $slug ] ) ) {
-            $ldx = -( $dot_r * 2 );
+        // Label positioning — computed from dot radius and font size.
+        $anchor = self::LABEL_ANCHORS[ $slug ] ?? 'middle';
+
+        if ( 'middle' === $anchor ) {
+            // Label centered above the dot: just clear the dot + small gap.
+            $ldx = 0;
+            $ldy = -( $dot_r + (int) round( $name_fs * 0.4 ) + 2 );
+        } elseif ( 'start' === $anchor ) {
+            // Label to the right of the dot.
+            $ldx = $dot_r + 4;
+            $ldy = (int) round( $name_fs * 0.35 );
+        } else {
+            // 'end' — label to the left of the dot.
+            $ldx = -( $dot_r + 4 );
+            $ldy = (int) round( $name_fs * 0.35 );
         }
-        $ldy = isset( self::LABEL_OFFSETS[ $slug ] ) && 'middle' !== $anchor ? $offset[2] : -$label_dy;
 
         $svg  = '<g id="awmp-city-' . esc_attr( $slug ) . '" class="awmp-city"';
         $svg .= ' transform="translate(' . $x . ',' . $y . ')"';
