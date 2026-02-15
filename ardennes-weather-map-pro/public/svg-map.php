@@ -65,21 +65,21 @@ class AWMP_SVG_Map {
      * @var array<string, array{string, int, int}>
      */
     private const LABEL_OFFSETS = [
-        'charleville-mezieres'  => [ 'middle', 0, -32 ],
-        'sedan'                 => [ 'middle', 0, -32 ],
-        'carignan'              => [ 'middle', 0, -32 ],
-        'tremblois-les-rocrois' => [ 'middle', 0, -32 ],
-        'signy-le-petit'        => [ 'middle', 0, -32 ],
-        'les-hautes-rivieres'   => [ 'start', 12, -8 ],
-        'givet'                 => [ 'middle', 0, -32 ],
-        'revin'                 => [ 'end', -12, -8 ],
-        'vaux-les-rubigny'      => [ 'middle', 0, -32 ],
-        'saint-germainmont'     => [ 'middle', 0, -32 ],
-        'rethel'                => [ 'middle', 0, -32 ],
-        'vouziers'              => [ 'middle', 0, -32 ],
-        'tailly'                => [ 'start', 12, -8 ],
-        'verrieres'             => [ 'end', -12, 4 ],
-        'omont'                 => [ 'middle', 0, -32 ],
+        'charleville-mezieres'  => [ 'middle', 0, -42 ],
+        'sedan'                 => [ 'middle', 0, -42 ],
+        'carignan'              => [ 'middle', 0, -42 ],
+        'tremblois-les-rocrois' => [ 'middle', 0, -42 ],
+        'signy-le-petit'        => [ 'middle', 0, -42 ],
+        'les-hautes-rivieres'   => [ 'start', 14, -10 ],
+        'givet'                 => [ 'middle', 0, -42 ],
+        'revin'                 => [ 'end', -14, -10 ],
+        'vaux-les-rubigny'      => [ 'middle', 0, -42 ],
+        'saint-germainmont'     => [ 'middle', 0, -42 ],
+        'rethel'                => [ 'middle', 0, -42 ],
+        'vouziers'              => [ 'middle', 0, -42 ],
+        'tailly'                => [ 'start', 14, -10 ],
+        'verrieres'             => [ 'end', -14, 6 ],
+        'omont'                 => [ 'middle', 0, -42 ],
     ];
 
     /**
@@ -313,7 +313,7 @@ class AWMP_SVG_Map {
         $color     = self::temp_to_color( $temp );
 
         // Label offset.
-        $offset = self::LABEL_OFFSETS[ $slug ] ?? [ 'middle', 0, -30 ];
+        $offset = self::LABEL_OFFSETS[ $slug ] ?? [ 'middle', 0, -42 ];
         $anchor = $offset[0];
         $ldx    = $offset[1];
         $ldy    = $offset[2];
@@ -323,26 +323,26 @@ class AWMP_SVG_Map {
         $svg .= ' data-lat="' . esc_attr( $lat ) . '" data-lng="' . esc_attr( $lng ) . '">';
 
         // ── City dot ──
-        $svg .= '<circle class="awmp-city-dot" cx="0" cy="0" r="5"';
-        $svg .= ' fill="#1a5276" stroke="#fff" stroke-width="2"/>';
+        $svg .= '<circle class="awmp-city-dot" cx="0" cy="0" r="7"';
+        $svg .= ' fill="#1a5276" stroke="#fff" stroke-width="2.5"/>';
 
         // ── City name label ──
         $svg .= '<text class="awmp-city-name" x="' . $ldx . '" y="' . $ldy . '"';
         $svg .= ' text-anchor="' . $anchor . '"';
-        $svg .= ' font-size="12" font-weight="700" fill="#1a252f">';
+        $svg .= ' font-size="18" font-weight="700" fill="#1a252f">';
         $svg .= esc_html( $name );
         $svg .= '</text>';
 
         // ── Weather data group ──
-        $svg .= '<g class="awmp-city-weather" transform="translate(0, 14)">';
+        $svg .= '<g class="awmp-city-weather" transform="translate(0, 18)">';
 
         // Temperature badge background.
-        $svg .= '<rect class="awmp-temp-bg" x="-24" y="-11" width="48" height="22"';
-        $svg .= ' rx="11" fill="' . esc_attr( $color ) . '" filter="url(#awmp-badge-shadow)"/>';
+        $svg .= '<rect class="awmp-temp-bg" x="-32" y="-15" width="64" height="30"';
+        $svg .= ' rx="15" fill="' . esc_attr( $color ) . '" filter="url(#awmp-badge-shadow)"/>';
 
         // Temperature text.
-        $svg .= '<text class="awmp-temp-text" x="0" y="5"';
-        $svg .= ' text-anchor="middle" font-size="13" font-weight="700" fill="#fff">';
+        $svg .= '<text class="awmp-temp-text" x="0" y="6"';
+        $svg .= ' text-anchor="middle" font-size="18" font-weight="700" fill="#fff">';
         $svg .= esc_html( $temp ?: '--' );
         $svg .= '</text>';
 
@@ -351,11 +351,11 @@ class AWMP_SVG_Map {
             $svg .= '<use class="awmp-weather-icon"';
             $svg .= ' href="#awmp-icon-' . esc_attr( $condition ) . '"';
             $svg .= ' xlink:href="#awmp-icon-' . esc_attr( $condition ) . '"';
-            $svg .= ' x="22" y="-12" width="24" height="24"/>';
+            $svg .= ' x="30" y="-17" width="34" height="34"/>';
         } else {
             // Hidden placeholder so JS can update it later.
             $svg .= '<use class="awmp-weather-icon" href="" xlink:href=""';
-            $svg .= ' x="22" y="-12" width="24" height="24" style="display:none"/>';
+            $svg .= ' x="30" y="-17" width="34" height="34" style="display:none"/>';
         }
 
         $svg .= '</g>'; // .awmp-city-weather
